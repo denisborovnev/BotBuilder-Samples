@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using AdaptiveCards;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Teams;
 using Microsoft.Bot.Schema;
@@ -60,26 +61,32 @@ namespace Microsoft.BotBuilderSamples.Bots
 
             // We take every row of the results and wrap them in cards wrapped in in MessagingExtensionAttachment objects.
             // The Preview is optional, if it includes a Tap, that will trigger the OnTeamsMessagingExtensionSelectItemAsync event back on this bot.
-            var card = new ThumbnailCard
-            {
-                Title = $"{packageId}, {version}",
-                Subtitle = description,
-                Buttons = new List<CardAction>
-                    {
-                        new CardAction { Type = ActionTypes.OpenUrl, Title = "Nuget Package", Value = $"https://www.nuget.org/packages/{packageId}" },
-                        new CardAction { Type = ActionTypes.OpenUrl, Title = "Project", Value = projectUrl },
-                    },
-            };
 
-            if (!string.IsNullOrEmpty(iconUrl))
+            var card = new AdaptiveCard(new AdaptiveSchemaVersion(1, 2));
+
+            var titleContainer = new AdaptiveContainer();
+            titleContainer.Items.Add(new AdaptiveTextBlock
             {
-                card.Images = new List<CardImage>() { new CardImage(iconUrl, "Icon") };
-            }
+                Text = $"{packageId}, {version}",
+                Size = AdaptiveTextSize.Large,
+                Weight = AdaptiveTextWeight.Bolder,
+                Wrap = true
+            });
+            card.Body.Add(titleContainer);
+
+            card.Actions.Add(
+                new AdaptiveOpenUrlAction { Title = "Nuget Package", Url = new System.Uri($"https://www.nuget.org/packages/{packageId}") }
+            );
+           
 
             var attachment = new MessagingExtensionAttachment
             {
-                ContentType = ThumbnailCard.ContentType,
+                ContentType = AdaptiveCard.ContentType,
                 Content = card,
+                Preview = new Attachment(HeroCard.ContentType, null, new ThumbnailCard
+                {
+                    Title = $"{packageId}, {version}"
+                })
             };
 
             return Task.FromResult(new MessagingExtensionResponse

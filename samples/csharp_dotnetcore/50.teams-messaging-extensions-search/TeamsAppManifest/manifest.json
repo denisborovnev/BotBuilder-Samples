@@ -23,6 +23,16 @@
     "color": "icon-color.png"
   },
   "accentColor": "#abcdef",
+  "bots": [
+    {
+      "botId": "<<YOUR-MICROSOFT-APP-ID>>",
+      "scopes": [
+        "personal"
+      ],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
   "composeExtensions": [
     {
       "botId": "<<YOUR-MICROSOFT-APP-ID>>",
