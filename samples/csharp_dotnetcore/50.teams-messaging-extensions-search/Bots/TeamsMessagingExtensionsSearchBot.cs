@@ -23,10 +23,12 @@ namespace Microsoft.BotBuilderSamples.Bots
 
             var packages = await FindPackages(text);
 
-            // We take every row of the results and wrap them in cards wrapped in in MessagingExtensionAttachment objects.
-            // The Preview is optional, if it includes a Tap, that will trigger the OnTeamsMessagingExtensionSelectItemAsync event back on this bot.
             var attachments = packages.Select(package => {
-                    var previewCard = new ThumbnailCard { Title = package.Item1, Tap = new CardAction { Type = "invoke", Value = package } };
+                    var previewCard = new ThumbnailCard {
+                        Title = package.Item1,
+                        // NOTE:!!! if comment the tap action then adaptive card is shown with icon and title
+                        Tap = new CardAction { Type = "invoke", Value = package }
+                    };
                     if (!string.IsNullOrEmpty(package.Item5))
                     {
                         previewCard.Images = new List<CardImage>() { new CardImage(package.Item5, "Icon") };
@@ -34,15 +36,15 @@ namespace Microsoft.BotBuilderSamples.Bots
 
                     var attachment = new MessagingExtensionAttachment
                     {
-                        ContentType = HeroCard.ContentType,
-                        Content = new HeroCard { Title = package.Item1 },
+                        ContentType = AdaptiveCard.ContentType,
+                        Content = CreateCard(package.Item1, package.Item2),
+
                         Preview = previewCard.ToAttachment()
                     };
                 
                     return attachment;
                 }).ToList();
 
-            // The list of MessagingExtensionAttachments must we wrapped in a MessagingExtensionResult wrapped in a MessagingExtensionResponse.
             return new MessagingExtensionResponse
             {
                 ComposeExtension = new MessagingExtensionResult
@@ -56,27 +58,9 @@ namespace Microsoft.BotBuilderSamples.Bots
 
         protected override Task<MessagingExtensionResponse> OnTeamsMessagingExtensionSelectItemAsync(ITurnContext<IInvokeActivity> turnContext, JObject query, CancellationToken cancellationToken)
         {
-            // The Preview card's Tap should have a Value property assigned, this will be returned to the bot in this event. 
             var (packageId, version, description, projectUrl, iconUrl) = query.ToObject<(string, string, string, string, string)>();
 
-            // We take every row of the results and wrap them in cards wrapped in in MessagingExtensionAttachment objects.
-            // The Preview is optional, if it includes a Tap, that will trigger the OnTeamsMessagingExtensionSelectItemAsync event back on this bot.
-
-            var card = new AdaptiveCard(new AdaptiveSchemaVersion(1, 2));
-
-            var titleContainer = new AdaptiveContainer();
-            titleContainer.Items.Add(new AdaptiveTextBlock
-            {
-                Text = $"{packageId}, {version}",
-                Size = AdaptiveTextSize.Large,
-                Weight = AdaptiveTextWeight.Bolder,
-                Wrap = true
-            });
-            card.Body.Add(titleContainer);
-
-            card.Actions.Add(
-                new AdaptiveOpenUrlAction { Title = "Nuget Package", Url = new System.Uri($"https://www.nuget.org/packages/{packageId}") }
-            );
+            var card = CreateCard(packageId, version);
            
 
             var attachment = new MessagingExtensionAttachment
@@ -100,7 +84,27 @@ namespace Microsoft.BotBuilderSamples.Bots
             });
         }
 
-        // Generate a set of substrings to illustrate the idea of a set of results coming back from a query. 
+        private AdaptiveCard CreateCard(string packageId, string version)
+        {
+            var card = new AdaptiveCard(new AdaptiveSchemaVersion(1, 2));
+
+            var titleContainer = new AdaptiveContainer();
+            titleContainer.Items.Add(new AdaptiveTextBlock
+            {
+                Text = $"{packageId}, {version}",
+                Size = AdaptiveTextSize.Large,
+                Weight = AdaptiveTextWeight.Bolder,
+                Wrap = true
+            });
+            card.Body.Add(titleContainer);
+
+            card.Actions.Add(
+                new AdaptiveOpenUrlAction { Title = "Nuget Package", Url = new System.Uri($"https://www.nuget.org/packages/{packageId}") }
+            );
+
+            return card;
+        }
+
         private async Task<IEnumerable<(string, string, string, string, string)>> FindPackages(string text)
         {
             var obj = JObject.Parse(await (new HttpClient()).GetStringAsync($"https://azuresearch-usnc.nuget.org/query?q=id:{text}&prerelease=true"));
