@@ -17,6 +17,46 @@ namespace Microsoft.BotBuilderSamples.Bots
 {
     public class TeamsMessagingExtensionsSearchBot : TeamsActivityHandler
     {
+        // NOTE: adaptive card is shown with app icon/title
+        //protected override async Task<MessagingExtensionResponse> OnTeamsMessagingExtensionQueryAsync(ITurnContext<IInvokeActivity> turnContext, MessagingExtensionQuery query, CancellationToken cancellationToken)
+        //{
+        //    var text = query?.Parameters?[0]?.Value as string ?? string.Empty;
+
+        //    var packages = await FindPackages(text);
+
+        //    var attachments = packages.Select(package => {
+        //        var previewCard = new ThumbnailCard
+        //        {
+        //            Title = package.Item1,
+        //        };
+        //        if (!string.IsNullOrEmpty(package.Item5))
+        //        {
+        //            previewCard.Images = new List<CardImage>() { new CardImage(package.Item5, "Icon") };
+        //        }
+
+        //        var attachment = new MessagingExtensionAttachment
+        //        {
+        //            ContentType = AdaptiveCard.ContentType,
+        //            Content = CreateCard(package.Item1, package.Item2),
+
+        //            Preview = previewCard.ToAttachment()
+        //        };
+
+        //        return attachment;
+        //    }).ToList();
+
+        //    return new MessagingExtensionResponse
+        //    {
+        //        ComposeExtension = new MessagingExtensionResult
+        //        {
+        //            Type = "result",
+        //            AttachmentLayout = "list",
+        //            Attachments = attachments
+        //        }
+        //    };
+        //}
+
+        // NOTE: adaptive card is shown without app icon/title
         protected override async Task<MessagingExtensionResponse> OnTeamsMessagingExtensionQueryAsync(ITurnContext<IInvokeActivity> turnContext, MessagingExtensionQuery query, CancellationToken cancellationToken)
         {
             var text = query?.Parameters?[0]?.Value as string ?? string.Empty;
@@ -26,7 +66,6 @@ namespace Microsoft.BotBuilderSamples.Bots
             var attachments = packages.Select(package => {
                     var previewCard = new ThumbnailCard {
                         Title = package.Item1,
-                        // NOTE:!!! if comment the tap action then adaptive card is shown with icon and title
                         Tap = new CardAction { Type = "invoke", Value = package }
                     };
                     if (!string.IsNullOrEmpty(package.Item5))
@@ -36,8 +75,8 @@ namespace Microsoft.BotBuilderSamples.Bots
 
                     var attachment = new MessagingExtensionAttachment
                     {
-                        ContentType = AdaptiveCard.ContentType,
-                        Content = CreateCard(package.Item1, package.Item2),
+                        ContentType = HeroCard.ContentType,
+                        Content = new HeroCard { Title = package.Item1 },
 
                         Preview = previewCard.ToAttachment()
                     };
